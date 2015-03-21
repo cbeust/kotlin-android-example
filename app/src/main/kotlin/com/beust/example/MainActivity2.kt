@@ -13,6 +13,8 @@ import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 
+import kotlinx.android.synthetic.activity_main2.textView
+
 open class MainActivity2 : Activity() {
     val TAG = "MainActivity2"
     val HOST = "http://api.openweathermap.org"
@@ -27,13 +29,11 @@ open class MainActivity2 : Activity() {
 
         val service = restAdapter.create(javaClass<Weather>())
 
-         val tv = findViewById(R.id.textView) as TextView
-
         service.weather()
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe( { (s : JsonObject) : Unit ->
-                    tv.setText(s.toString())
+                    textView.setText(s.toString())
                     Log.d(TAG, "Received weather " + s)
                 } )
 
