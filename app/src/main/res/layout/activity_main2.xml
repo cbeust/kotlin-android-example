@@ -10,12 +10,13 @@
               tools:context=".MainActivity">
 
     <TextView
+            android:id="@+id/textView"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:text="Activity 2" />
 
     <Button android:text="Next"
-            android:id="@+id/Button02"
+            android:id="@+id/button"
             android:layout_width="250px"
             android:textSize="18px"
             android:layout_height="55px">

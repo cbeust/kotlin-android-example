@@ -5,12 +5,13 @@ import android.os.Bundle
 import android.app.Activity
 import android.view.View
 import android.widget.Button
-import rx.Observable
+import android.widget.TextView
 import android.util.Log
+import com.google.gson.JsonObject
 import retrofit.RestAdapter
+import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
-import com.google.gson.JsonObject
 
 open class MainActivity2 : Activity() {
     val TAG = "MainActivity2"
@@ -26,19 +27,22 @@ open class MainActivity2 : Activity() {
 
         val service = restAdapter.create(javaClass<Weather>())
 
+         val tv = findViewById(R.id.textView) as TextView
+
         service.weather()
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe( { (s : JsonObject) : Unit ->
+                    tv.setText(s.toString())
                     Log.d(TAG, "Received weather " + s)
                 } )
 
 //        Log.d(TAG, "Starting yeah: " + w)
         val o = Observable.just("foo", "bar")
         o
-                .map( { ( s : String ) -> s.toUpperCase()})
-                .subscribe( { (s: String) -> Log.d(TAG, "Yeah: " + s) } )
-        val next: Button = findViewById(R.id.Button02) as Button
+                .map( { s: String -> s.toUpperCase()})
+                .subscribe( { s: String -> Log.d(TAG, "Yeah: " + s) } )
+        val next: Button = findViewById(R.id.button) as Button
         next.setOnClickListener(object : View.OnClickListener {
             public override fun onClick(view: View) {
                 val intent: Intent = Intent()
