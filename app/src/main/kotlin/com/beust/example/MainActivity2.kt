@@ -48,7 +48,7 @@ open class MainActivity2 : Activity() {
         o
                 .map( { s: String -> s.toUpperCase()})
                 .subscribe( { s: String -> Log.d(TAG, "Yeah: " + s) } )
-        val next: Button = findViewById(R.id.searchButton) as Button
+        val next: Button = findViewById(R.id.addFriendButton) as Button
         next.setOnClickListener(object : View.OnClickListener {
             public override fun onClick(view: View) {
                 val intent: Intent = Intent()

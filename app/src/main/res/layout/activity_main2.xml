@@ -16,7 +16,7 @@
             android:text="Activity 2" />
 
     <Button android:text="Search"
-            android:id="@+id/searchButton"
+            android:id="@+id/addFriendButton"
             android:layout_gravity="center_horizontal"
             android:layout_width="250px"
             android:layout_height="100px"

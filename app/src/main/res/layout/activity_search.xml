@@ -16,7 +16,7 @@
             android:hint="Type the name" />
 
     <Button android:text="Add friend"
-            android:id="@+id/searchButton"
+            android:id="@+id/addFriendButton"
             android:layout_gravity="center_horizontal"
             android:layout_width="250px"
             android:layout_height="70px"
