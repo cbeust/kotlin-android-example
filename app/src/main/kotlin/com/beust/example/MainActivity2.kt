@@ -19,6 +19,12 @@ open class MainActivity2 : Activity() {
     val TAG = "MainActivity2"
     val HOST = "http://api.openweathermap.org"
 
+    fun kelvinToFahrenheit(k: Float) =
+            (k - 273.15) * 1.8 + 32.0
+
+    fun jsonToTemp(jo : JsonObject) =
+            kelvinToFahrenheit(jo.get("main").getAsJsonObject().get("temp").getAsFloat())
+
     protected override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
@@ -42,7 +48,7 @@ open class MainActivity2 : Activity() {
         o
                 .map( { s: String -> s.toUpperCase()})
                 .subscribe( { s: String -> Log.d(TAG, "Yeah: " + s) } )
-        val next: Button = findViewById(R.id.button) as Button
+        val next: Button = findViewById(R.id.searchButton) as Button
         next.setOnClickListener(object : View.OnClickListener {
             public override fun onClick(view: View) {
                 val intent: Intent = Intent()
