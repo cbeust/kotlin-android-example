@@ -118,14 +118,13 @@ class SearchActivity : Activity() {
         mUserObservable
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {(jo: JsonObject) ->
-                loading.setVisibility(View.INVISIBLE)
                 val hasResult = mServer.isOk(jo)
                 addFriendButton.setEnabled(hasResult)
-                if (hasResult) {
-                    mUser = User(jo.get("id").getAsString(), jo.get("name").getAsString())
-                } else {
-                    mUser = null
-                }
+                loading.setVisibility(View.INVISIBLE)
+                mUser = if (hasResult)
+                        User(jo.get("id").getAsString(), jo.get("name").getAsString())
+                    else
+                        null
         }
 
         // When the user presses the "Add friend" button
