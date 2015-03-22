@@ -135,6 +135,9 @@ class SearchActivity : Activity() {
                         addStatus.setText(
                             if (mServer.isOk(jo)) "Friend added" else "Friend not added"
                         )
+                        if (mServer.isOk(jo)) {
+                            editText.setText("")
+                        }
                     }
             }
     }
