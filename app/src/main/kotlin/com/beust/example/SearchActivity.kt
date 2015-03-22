@@ -4,17 +4,21 @@ import android.app.Activity
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
+import android.view.View
 import com.google.gson.JsonObject
+import kotlinx.android.synthetic.activity_search.addFriendButton
 import kotlinx.android.synthetic.activity_search.addStatus
 import kotlinx.android.synthetic.activity_search.editText
-import kotlinx.android.synthetic.activity_search.addFriendButton
-import retrofit.RestAdapter
+import kotlinx.android.synthetic.activity_search.loading
 import rx.Observable
+import rx.android.schedulers.AndroidSchedulers
 import rx.android.view.OnClickEvent
 import rx.android.view.ViewObservable
 import rx.android.widget.OnTextChangeEvent
 import rx.android.widget.WidgetObservable
+import rx.schedulers.Schedulers
 import rx.subjects.BehaviorSubject
+import java.util.concurrent.TimeUnit
 
 trait Server {
     fun findUser(name: String) : Observable<JsonObject>
@@ -61,6 +65,7 @@ class MockServer : Server {
         } else {
             result = createError()
         }
+        Thread.sleep(2000)
         return Observable.just(result)
     }
 }
@@ -84,30 +89,45 @@ class SearchActivity : Activity() {
 
         // Whenever a new character is typed
         WidgetObservable.text(editText)
-                .doOnNext {(e: OnTextChangeEvent) -> addFriendButton.setEnabled(false) }
-                .map { e: OnTextChangeEvent -> e.text().toString() }
-                .filter { s: String -> s.length() >= 3 }
-//            .debounce(500, TimeUnit.MILLISECONDS)
-                .subscribe { s: String -> mNameObservable.onNext(s) }
-
-        // We have a new name to search, ask the server about it
-        mNameObservable.subscribe {(s: String) ->
-            Log.d(TAG, "Sending to server: ${s}")
-            mServer.findUser(s).subscribe {(jo: JsonObject) ->
-                mUserObservable.onNext(jo)
+            .doOnNext {(e: OnTextChangeEvent) ->
+                addFriendButton.setEnabled(false)
+                loading.setVisibility(View.INVISIBLE)
             }
-        }
+            .map { e: OnTextChangeEvent -> e.text().toString() }
+            .filter { s: String -> s.length() >= 3 }
+            .debounce(500, TimeUnit.MILLISECONDS)
+            .subscribe { s: String -> mNameObservable.onNext(s) }
+
+        // We have a new name to search, ask the server about it (on the IO thread)
+        mNameObservable
+            .observeOn(Schedulers.io())
+            .subscribe{ (s: String) ->
+                Log.d(TAG, "Sending to server: ${s} " + mainThread())
+                mServer.findUser(s).subscribe {(jo: JsonObject) ->
+                    mUserObservable.onNext(jo)
+                }
+            }
+        // ... and show our loading icon (on the main thread)
+        mNameObservable
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {
+                (s: String) -> loading.setVisibility(View.VISIBLE)
+            }
 
         // Manage the response from the server to "Search"
-        mUserObservable.subscribe {(jo: JsonObject) ->
-            val hasResult = mServer.isOk(jo)
-            addFriendButton.setEnabled(hasResult)
-            if (hasResult) {
-                mUser = User(jo.get("id").getAsString(), jo.get("name").getAsString())
-            } else {
-                mUser = null
-            }
+        mUserObservable
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe {(jo: JsonObject) ->
+                loading.setVisibility(View.INVISIBLE)
+                val hasResult = mServer.isOk(jo)
+                addFriendButton.setEnabled(hasResult)
+                if (hasResult) {
+                    mUser = User(jo.get("id").getAsString(), jo.get("name").getAsString())
+                } else {
+                    mUser = null
+                }
         }
+
         // When the user presses the "Add friend" button
         ViewObservable.clicks(addFriendButton)
             .subscribe {(e: OnClickEvent) ->
