@@ -35,10 +35,4 @@
             android:textSize="18px">
     </Button>
 
-    <TextView
-            android:id="@+id/addStatus"
-            android:layout_gravity="center_horizontal"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content" />
-
 </LinearLayout>

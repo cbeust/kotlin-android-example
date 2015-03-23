@@ -4,10 +4,11 @@ import android.app.Activity
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
+import android.view.Gravity
 import android.view.View
+import android.widget.Toast
 import com.google.gson.JsonObject
 import kotlinx.android.synthetic.activity_search.addFriendButton
-import kotlinx.android.synthetic.activity_search.addStatus
 import kotlinx.android.synthetic.activity_search.editText
 import kotlinx.android.synthetic.activity_search.loading
 import rx.Observable
@@ -54,6 +55,8 @@ class MockServer : Server {
         } else {
             result = createError()
         }
+        result.addProperty("name", user.name)
+        result.addProperty("id", user.id)
         return Observable.just(result)
     }
 
@@ -65,7 +68,7 @@ class MockServer : Server {
         } else {
             result = createError()
         }
-        Thread.sleep(2000)
+        Thread.sleep(1000)
         return Observable.just(result)
     }
 }
@@ -75,7 +78,7 @@ data class User(val id: String, val name: String)
 class SearchActivity : Activity() {
     private val TAG = "SearchActivity"
     val mServer = MockServer()
-    /** Called whenever a new character is type */
+    /** Called whenever a new character is typed */
     val mNameObservable: BehaviorSubject<String> = BehaviorSubject.create()
     /** Called whenever we receive a response from the server about a name */
     val mUserObservable: BehaviorSubject<JsonObject> = BehaviorSubject.create()
@@ -110,35 +113,45 @@ class SearchActivity : Activity() {
         // ... and show our loading icon (on the main thread)
         mNameObservable
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {
-                s: String -> loading.setVisibility(View.VISIBLE)
+            .subscribe { s: String ->
+                loading.setVisibility(View.VISIBLE)
             }
 
-        // Manage the response from the server to "Search"
+        // Manage the response from the server to "Search", turn the JsonObject into a User,
+        // if the response is "ok"
         mUserObservable
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { jo: JsonObject ->
-                val hasResult = mServer.isOk(jo)
-                addFriendButton.setEnabled(hasResult)
-                loading.setVisibility(View.INVISIBLE)
-                mUser = if (hasResult) {
-                    User(jo.get("id").getAsString(), jo.get("name").getAsString())
+            .map { jo: JsonObject ->
+                if (mServer.isOk(jo)) {
+                    User(jo.get("id").getAsString(), jo.get("id").getAsString())
                 } else {
                     null
                 }
-        }
+            }
+            .subscribe { user: User? ->
+                Log.d(TAG, "Enabling add friend")
+                addFriendButton.setEnabled(user != null)
+                Log.d(TAG, "Hiding loading")
+                loading.setVisibility(View.INVISIBLE)
+                mUser = user
+            }
 
-        // When the user presses the "Add friend" button
+        // If the user presses the "Add friend" button, we know we have a valid User: send
+        // the "Add friend" request to the server
         ViewObservable.clicks(addFriendButton)
             .subscribe { e: OnClickEvent ->
                 mServer.addFriend(mUser!!)
                     .subscribe { jo: JsonObject ->
+                        val toastText: String
                         if (mServer.isOk(jo)) {
-                            addStatus.setText("Friend added")
+                            toastText = "Friend added id: " + jo.get("id").getAsString()
                             editText.setText("")
                         } else {
-                            addStatus.setText("Friend not added")
+                            toastText = "ERROR: Friend not added"
                         }
+                        val toast = Toast.makeText(this, toastText, Toast.LENGTH_LONG)
+                        toast.setGravity(Gravity.TOP, 0, 200)
+                        toast.show()
                     }
             }
     }

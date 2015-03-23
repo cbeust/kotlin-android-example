@@ -38,10 +38,10 @@ open class MainActivity2 : Activity() {
         service.weather()
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe( { (s : JsonObject) : Unit ->
+                .subscribe{ s: JsonObject -> {
                     textView.setText(s.toString())
                     Log.d(TAG, "Received weather " + s)
-                } )
+                }}
 
 //        Log.d(TAG, "Starting yeah: " + w)
         val o = Observable.just("foo", "bar")
