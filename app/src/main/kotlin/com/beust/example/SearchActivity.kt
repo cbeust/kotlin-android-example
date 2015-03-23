@@ -73,7 +73,7 @@ class MockServer : Server {
 data class User(val id: String, val name: String)
 
 class SearchActivity : Activity() {
-    val TAG = "SearchActivity"
+    private val TAG = "SearchActivity"
     val mServer = MockServer()
     /** Called whenever a new character is type */
     val mNameObservable: BehaviorSubject<String> = BehaviorSubject.create()
@@ -89,7 +89,7 @@ class SearchActivity : Activity() {
 
         // Whenever a new character is typed
         WidgetObservable.text(editText)
-            .doOnNext {(e: OnTextChangeEvent) ->
+            .doOnNext { e: OnTextChangeEvent ->
                 addFriendButton.setEnabled(false)
                 loading.setVisibility(View.INVISIBLE)
             }
@@ -101,9 +101,9 @@ class SearchActivity : Activity() {
         // We have a new name to search, ask the server about it (on the IO thread)
         mNameObservable
             .observeOn(Schedulers.io())
-            .subscribe{ (s: String) ->
+            .subscribe{ s: String ->
                 Log.d(TAG, "Sending to server: ${s} " + mainThread())
-                mServer.findUser(s).subscribe {(jo: JsonObject) ->
+                mServer.findUser(s).subscribe { jo: JsonObject ->
                     mUserObservable.onNext(jo)
                 }
             }
@@ -111,13 +111,13 @@ class SearchActivity : Activity() {
         mNameObservable
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe {
-                (s: String) -> loading.setVisibility(View.VISIBLE)
+                s: String -> loading.setVisibility(View.VISIBLE)
             }
 
         // Manage the response from the server to "Search"
         mUserObservable
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe {(jo: JsonObject) ->
+            .subscribe { jo: JsonObject ->
                 val hasResult = mServer.isOk(jo)
                 addFriendButton.setEnabled(hasResult)
                 loading.setVisibility(View.INVISIBLE)
@@ -130,9 +130,9 @@ class SearchActivity : Activity() {
 
         // When the user presses the "Add friend" button
         ViewObservable.clicks(addFriendButton)
-            .subscribe {(e: OnClickEvent) ->
+            .subscribe { e: OnClickEvent ->
                 mServer.addFriend(mUser!!)
-                    .subscribe {(jo: JsonObject) ->
+                    .subscribe { jo: JsonObject ->
                         if (mServer.isOk(jo)) {
                             addStatus.setText("Friend added")
                             editText.setText("")
