@@ -121,10 +121,11 @@ class SearchActivity : Activity() {
                 val hasResult = mServer.isOk(jo)
                 addFriendButton.setEnabled(hasResult)
                 loading.setVisibility(View.INVISIBLE)
-                mUser = if (hasResult)
-                        User(jo.get("id").getAsString(), jo.get("name").getAsString())
-                    else
-                        null
+                mUser = if (hasResult) {
+                    User(jo.get("id").getAsString(), jo.get("name").getAsString())
+                } else {
+                    null
+                }
         }
 
         // When the user presses the "Add friend" button
@@ -132,11 +133,11 @@ class SearchActivity : Activity() {
             .subscribe {(e: OnClickEvent) ->
                 mServer.addFriend(mUser!!)
                     .subscribe {(jo: JsonObject) ->
-                        addStatus.setText(
-                            if (mServer.isOk(jo)) "Friend added" else "Friend not added"
-                        )
                         if (mServer.isOk(jo)) {
+                            addStatus.setText("Friend added")
                             editText.setText("")
+                        } else {
+                            addStatus.setText("Friend not added")
                         }
                     }
             }
