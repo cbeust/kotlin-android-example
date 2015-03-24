@@ -96,24 +96,24 @@ class SearchActivity : Activity() {
                 addFriendButton.setEnabled(false)
                 loading.setVisibility(View.INVISIBLE)
             }
-            .map { e: OnTextChangeEvent -> e.text().toString() }
-            .filter { s: String -> s.length() >= 3 }
+            .map { it.text().toString() }
+            .filter { it.length() >= 3 }
             .debounce(500, TimeUnit.MILLISECONDS)
-            .subscribe { s: String -> mNameObservable.onNext(s) }
+            .subscribe { mNameObservable.onNext(it) }
 
         // We have a new name to search, ask the server about it (on the IO thread)
         mNameObservable
             .observeOn(Schedulers.io())
-            .subscribe{ s: String ->
-                Log.d(TAG, "Sending to server: ${s} " + mainThread())
-                mServer.findUser(s).subscribe { jo: JsonObject ->
-                    mUserObservable.onNext(jo)
+            .subscribe{
+                Log.d(TAG, "Sending to server: ${it} " + mainThread())
+                mServer.findUser(it).subscribe {
+                    mUserObservable.onNext(it)
                 }
             }
         // ... and show our loading icon (on the main thread)
         mNameObservable
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { s: String ->
+            .subscribe {
                 loading.setVisibility(View.VISIBLE)
             }
 
@@ -121,19 +121,19 @@ class SearchActivity : Activity() {
         // if the response is "ok"
         mUserObservable
             .observeOn(AndroidSchedulers.mainThread())
-            .map { jo: JsonObject ->
-                if (mServer.isOk(jo)) {
-                    User(jo.get("id").getAsString(), jo.get("name").getAsString())
+            .map {
+                if (mServer.isOk(it)) {
+                    User(it.get("id").getAsString(), it.get("name").getAsString())
                 } else {
                     null
                 }
             }
-            .subscribe { user: User? ->
+            .subscribe {
                 Log.d(TAG, "Enabling add friend")
-                addFriendButton.setEnabled(user != null)
+                addFriendButton.setEnabled(it != null)
                 Log.d(TAG, "Hiding loading")
                 loading.setVisibility(View.INVISIBLE)
-                mUser = user
+                mUser = it
             }
 
         // If the user presses the "Add friend" button, we know we have a valid User: send
