@@ -123,7 +123,7 @@ class SearchActivity : Activity() {
             .observeOn(AndroidSchedulers.mainThread())
             .map { jo: JsonObject ->
                 if (mServer.isOk(jo)) {
-                    User(jo.get("id").getAsString(), jo.get("id").getAsString())
+                    User(jo.get("id").getAsString(), jo.get("name").getAsString())
                 } else {
                     null
                 }
