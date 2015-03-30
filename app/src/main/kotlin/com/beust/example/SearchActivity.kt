@@ -1,6 +1,11 @@
 package com.beust.example
 
 import android.app.Activity
+import android.app.LoaderManager
+import android.content.Context
+import android.content.CursorLoader
+import android.content.Loader
+import android.database.Cursor
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
@@ -10,8 +15,10 @@ import android.widget.Toast
 import com.google.gson.JsonObject
 import kotlinx.android.synthetic.activity_search.addFriendButton
 import kotlinx.android.synthetic.activity_search.editText
+import kotlinx.android.synthetic.activity_search.list
 import kotlinx.android.synthetic.activity_search.loading
 import rx.Observable
+import rx.Scheduler
 import rx.android.schedulers.AndroidSchedulers
 import rx.android.view.OnClickEvent
 import rx.android.view.ViewObservable
@@ -20,6 +27,7 @@ import rx.android.widget.WidgetObservable
 import rx.schedulers.Schedulers
 import rx.subjects.BehaviorSubject
 import java.util.concurrent.TimeUnit
+import kotlin.properties.Delegates
 
 trait Server {
     fun findUser(name: String) : Observable<JsonObject>
@@ -75,7 +83,7 @@ class MockServer : Server {
 
 data class User(val id: String, val name: String)
 
-class SearchActivity : Activity() {
+class SearchActivity : LoaderManager.LoaderCallbacks<Cursor>, Activity() {
     private val TAG = "SearchActivity"
     val mServer = MockServer()
     /** Called whenever a new character is typed */
@@ -86,9 +94,35 @@ class SearchActivity : Activity() {
 
     fun mainThread() : String = "Main thread: " + (Looper.getMainLooper() == Looper.myLooper())
 
+    private var mApp: MainApplication by Delegates.notNull()
+    private var mAdapter: LogCursorAdapter by Delegates.notNull()
+
     protected override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        super<Activity>.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
+
+        mApp = getApplication() as MainApplication
+        mAdapter = LogCursorAdapter(this, mApp.dbHelper.getLogs())
+
+        list.setAdapter(mAdapter)
+        getLoaderManager().initLoader(0, null, this)
+
+        //        WidgetObservable.text(editText)
+//                .subscribeOn(AndroidSchedulers.mainThread())
+//                .flatMap { e: OnTextChangeEvent ->
+//                    Log.d(TAG, "flatMap: " + mainThread())
+//                    val o = Observable.just("foo").delay(3, TimeUnit.SECONDS)
+//                            .subscribeOn(Schedulers.io())
+//                    o.subscribe { s: String ->
+//                        Log.d(TAG, "Result of just: ${s}   ${mainThread()}")
+//                    }
+//                    o
+//                }
+//                .doOnNext { s -> app.log("Character: ${s}")  }
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe{ o: String ->
+//                    Log.d(TAG, "Subscribe ${mainThread()} received ${o}")
+//                }
 
         // Whenever a new character is typed
         WidgetObservable.text(editText)
@@ -99,7 +133,18 @@ class SearchActivity : Activity() {
             .map { it.text().toString() }
             .filter { it.length() >= 3 }
             .debounce(500, TimeUnit.MILLISECONDS)
-            .subscribe { mNameObservable.onNext(it) }
+            .subscribe {
+                mNameObservable.onNext(it)
+            }
+
+        mNameObservable
+            .observeOn(Schedulers.computation())
+            .subscribe{
+                mApp.log("Character: ${it}")
+//                getLoaderManager().getLoader(0).forceLoad();
+//                mAdapter.notifyDataSetChanged()
+//                mAdapter.getCursor().requery()
+            }
 
         // We have a new name to search, ask the server about it (on the IO thread)
         mNameObservable
@@ -156,4 +201,22 @@ class SearchActivity : Activity() {
             }
     }
 
+    companion object {
+        class DbCursorLoader(val app: MainApplication, context: Context) : CursorLoader(context) {
+            override fun loadInBackground() : Cursor {
+                return app.dbHelper.getLogs()
+            }
+        }
+    }
+    override fun onCreateLoader(p0: Int, p1: Bundle?): Loader<Cursor>? {
+        return DbCursorLoader(mApp, this)
+    }
+
+    override fun onLoadFinished(loader: Loader<Cursor>?, cursor: Cursor?) {
+        mAdapter.swapCursor(cursor)
+    }
+
+    override fun onLoaderReset(p0: Loader<Cursor>?) {
+        mAdapter.swapCursor(null)
+    }
 }
