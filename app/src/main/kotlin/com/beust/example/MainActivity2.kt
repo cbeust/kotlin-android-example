@@ -7,6 +7,7 @@ import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.util.Log
+import android.widget.ListView
 import com.google.gson.JsonObject
 import retrofit.RestAdapter
 import rx.Observable
@@ -33,13 +34,15 @@ open class MainActivity2 : Activity() {
                 .setEndpoint(HOST)
                 .build()
 
-        val service = restAdapter.create(javaClass<Weather>())
+        val service = restAdapter.create(Weather::class.java)
+
+        val textView = findViewById(R.id.textView) as TextView
 
         service.weather()
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe{ s: JsonObject -> {
-                    textView.setText(s.toString())
+                    textView.text = s.toString()
                     Log.d(TAG, "Received weather " + s)
                 }}
 

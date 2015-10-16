@@ -33,7 +33,7 @@ class DbHelper(context: Context) : SQLiteOpenHelper(context, "example.db", null,
 
     fun getLogs() : Cursor {
         return getReadableDatabase()
-                .query(TABLE, array(ID, TIMESTAMP, TEXT), null, null, null, null, null);
+                .query(TABLE, arrayOf(ID, TIMESTAMP, TEXT), null, null, null, null, null);
     }
 
     override fun onCreate(db: SQLiteDatabase) {

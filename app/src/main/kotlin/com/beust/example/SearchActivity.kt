@@ -11,14 +11,9 @@ import android.os.Looper
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.widget.Toast
+import android.widget.*
 import com.google.gson.JsonObject
-import kotlinx.android.synthetic.activity_search.addFriendButton
-import kotlinx.android.synthetic.activity_search.editText
-import kotlinx.android.synthetic.activity_search.list
-import kotlinx.android.synthetic.activity_search.loading
 import rx.Observable
-import rx.Scheduler
 import rx.android.schedulers.AndroidSchedulers
 import rx.android.view.OnClickEvent
 import rx.android.view.ViewObservable
@@ -29,7 +24,7 @@ import rx.subjects.BehaviorSubject
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
-trait Server {
+interface Server {
     fun findUser(name: String) : Observable<JsonObject>
     fun addFriend(user: User) : Observable<JsonObject>
 }
@@ -44,7 +39,7 @@ class MockServer : Server {
     }
 
     fun isOk(jo: JsonObject) : Boolean {
-        return jo.get("status").getAsString() == "ok"
+        return jo.get("status").asString == "ok"
     }
 
     private fun create(status: String, key: String?, value: String?) : JsonObject {
@@ -98,14 +93,19 @@ class SearchActivity : LoaderManager.LoaderCallbacks<Cursor>, Activity() {
     private var mAdapter: LogCursorAdapter by Delegates.notNull()
 
     protected override fun onCreate(savedInstanceState: Bundle?) {
-        super<Activity>.onCreate(savedInstanceState)
+        super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_search)
 
-        mApp = getApplication() as MainApplication
+        val list = findViewById(R.id.list) as ListView
+        val editText = findViewById(R.id.editText) as EditText
+        val addFriendButton = findViewById(R.id.addFriendButton) as Button
+        val loading = findViewById(R.id.loading) as ProgressBar
+
+        mApp = application as MainApplication
         mAdapter = LogCursorAdapter(this, mApp.dbHelper.getLogs())
 
         list.setAdapter(mAdapter)
-        getLoaderManager().initLoader(0, null, this)
+        loaderManager.initLoader(0, null, this)
 
         //        WidgetObservable.text(editText)
 //                .subscribeOn(AndroidSchedulers.mainThread())
@@ -168,7 +168,7 @@ class SearchActivity : LoaderManager.LoaderCallbacks<Cursor>, Activity() {
             .observeOn(AndroidSchedulers.mainThread())
             .map {
                 if (mServer.isOk(it)) {
-                    User(it.get("id").getAsString(), it.get("name").getAsString())
+                    User(it.get("id").asString, it.get("name").asString)
                 } else {
                     null
                 }
@@ -189,7 +189,7 @@ class SearchActivity : LoaderManager.LoaderCallbacks<Cursor>, Activity() {
                     .subscribe { jo: JsonObject ->
                         val toastText: String
                         if (mServer.isOk(jo)) {
-                            toastText = "Friend added id: " + jo.get("id").getAsString()
+                            toastText = "Friend added id: " + jo.get("id").asString
                             editText.setText("")
                         } else {
                             toastText = "ERROR: Friend not added"
