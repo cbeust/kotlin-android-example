@@ -15,8 +15,8 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 22
-    buildToolsVersion "21.1.2"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.1"
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
@@ -26,8 +26,8 @@ android {
 
     defaultConfig {
         applicationId "com.beust.example"
-        minSdkVersion 15
-        targetSdkVersion 22
+        minSdkVersion 20
+        targetSdkVersion 23
         versionCode 1
         versionName "1.0"
     }
@@ -41,7 +41,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:22.2.0'
+    compile 'com.android.support:appcompat-v7:23.1.0'
     compile "org.jetbrains.kotlin:kotlin-stdlib:0.11.91"
 //    compile "org.jetbrains.kotlin:kotlin-stdlib:0.8.11"
     compile 'io.reactivex:rxandroid:0.24.0'
