@@ -3,4 +3,5 @@
 .DS_Store
 /build
 annotations
-
+.kobalt
+kobaltBuild
